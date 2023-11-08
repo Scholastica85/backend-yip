@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 import { MongoClient } from 'mongodb';
 
+
 // Takes the database cluster URI as an argument and creates a new instance of the mongoClient.
+const MONGO_URI = 'mongodb+srv://amaka:g8NewcYFNoJLNJ6X@cluster0.p9oyhbc.mongodb.net/?retryWrites=true&w=majority'
 const dbClient = new MongoClient(process.env.MONGO_URI);
 
 /**

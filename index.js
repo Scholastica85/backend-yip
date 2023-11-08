@@ -4,6 +4,7 @@ import express from 'express';
 import { userCollection } from './configs/db.js';
 
 // Express
+const express = require('express')
 const app = express();
 
 // Middlewares that allows correct parsing of argurments from the request object - request.query, request.params;
@@ -73,20 +74,70 @@ app.get('/users', async (request, response, next) => {
  *  Returns a single user if found by it id, else it throws an error
  */
 // Status code 200
-app.get('/users/:id', () => {});
+app.get('/users/:id', async(request, response, next) => {
+  try {
+    const user = await userCollection.findOne({_id: req.params.id})
+    if (!user) {
+      response.status(404).send('User not found')
+      return;
+    }
+    response.status(200).json(user);
+  } catch (error){
+    next (error);
+  }
+});
 
 // Status code 200
 // FIelds to be updated are within the approved limit. Check FIG 1.0 for approved fields
 // Updates a user by it id and returns a message telling us if is successful or not
 // Throw an error if request was unsuccessful
-app.patch('/users/:id', () => {});
+app.patch('/users/:id', async (request, response, next) => {
+  try {
+    const {fieldsToUpdate} = request.body;
+    const validationError = validateUserFields(fieldsToUpdate);
+    if (validationError){
+      response.status(400).send(validationError);
+      return;
+    }
+    const user = await userCollection.findOneandUpdate(
+      {_id: req.params.id},
+      {$set: fieldsToUpdate},
+      {new: true}
+    );
+    if (!user) {
+      response.status(404).send('User not Found');
+      return;
+    }
+    response.status(200).json({message: 'User upadated successfully'})
+  }catch (error) {
+    next(error);
+  }
+});
 
 // Status 204
 // Delete a user by it id if found, else throw an error
-app.delete('/users/:id', () => {});
+app.delete('/users/:id', async (request, response, next) => {
+  try {
+    const result = await userCollection.deleteOne({_id: req.params.id});
+    if (!result.deleteCount) {
+      response.status (404).send ('User Not Found');
+      return;
+    }
+    response.status(204).send();
+  } catch (error) {
+    next (error);
+  }
+});
 
 // Delete all users, else throw an error
-app.delete('/users', () => {});
+app.delete('/users', async (request, response, next) => {
+  try {
+    const result = await userCollection.deleteAll();
+    response.status(204).send();
+  }catch (error) {
+    next(error);
+  }
+});
 
 // Central error processing middleware
 app.use((error, request, response, next) => {
